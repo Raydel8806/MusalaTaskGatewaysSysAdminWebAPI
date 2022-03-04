@@ -1,0 +1,45 @@
+﻿@model GatewaysSysAdminWebAPI.Models.PeripheralDevice
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Delete</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>PeripheralDevice</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.UId)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.UId)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.DeviceVendor)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.DeviceVendor)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.DtDeviceCreated)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.DtDeviceCreated)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Online)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Online)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="ID" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-action="Index">Back to List</a>
+    </form>
+</div>

@@ -15,19 +15,31 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services
-    .AddDbContextPool<GatewaysSysAdminDBContext>(optionsAction => optionsAction
-    .UseSqlServer(configuration
-    .GetConnectionString("GatewaysDB")));
 
-builder.Services.AddTransient<IGatewayRepository,SQLGatewayRepository>();
+/// <summary>
+/// Use local MSSQL Server "GatewaysDB" or in cloud "CloudGatewaysDB"
+/// </summary>
+builder.Services
+    .AddDbContextFactory<GatewaysSysAdminDBContext>(optionsAction => optionsAction
+    .UseSqlServer(configuration
+    .GetConnectionString("GatewaysDB"))); 
+
+/// <summary>
+/// Use SQLGatewayRepository or other GatewayRepository technology. Ex. MockGatewayRepository
+/// Comment using // to use MockGatewayRepository
+/// </summary>
+ builder.Services.AddTransient<IGatewayRepository,SQLGatewayRepository>();
+
+/// <summary>
+/// Uncoment to use MockGatewayRepository
+/// </summary>
+//builder.Services.AddTransient<IGatewayRepository, MockGatewayRepository>();
 
 var app = builder.Build(); 
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-
     app.UseSwagger();
     app.UseSwaggerUI();
 }

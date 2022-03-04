@@ -1,9 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿#nullable disable
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using GatewaysSysAdminWebAPI.Models;
-using System.Text;
 using System.Text.RegularExpressions;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace GatewaysSysAdminWebAPI.Controllers
 {
@@ -11,40 +15,55 @@ namespace GatewaysSysAdminWebAPI.Controllers
     [ApiController]
     public class GatewaysController : ControllerBase
     {
-        private IGatewayRepository gatewayRepository;
+        private IGatewayRepository _gatewayRepository;
 
-        public GatewaysController(IGatewayRepository employeeRepository)
+        public GatewaysController(IGatewayRepository gatewayRepository)
         {
-            this.gatewayRepository = employeeRepository;
+            _gatewayRepository = gatewayRepository;
         }
 
-        // GET: api/<GatewaysController>/1
+        // GET: api/Gateways                            OK
         [HttpGet]
-        public IEnumerable<Gateway> Get()
-        {
-            return this.gatewayRepository.GetAllGateways();
-        }
-
-        // GET api/<GatewaysController>/2
-        [HttpGet("{id=int}")]
-        public ActionResult<Gateway> Get(int id)
+        public async Task<ActionResult<IEnumerable<Gateway>>> GetAllGateway()
         {
             try
             {
-                var result =  this.gatewayRepository.GetGatewayByID(id);
-                if (result == null) return NotFound();
-                return result;
+                var gateways = await _gatewayRepository.GetAllGateways();
+                return gateways;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError );
-            }            
+                return NotFound(ex.Message);
+            }
+
         }
 
-        // PUT api/<GatewaysController>/3
-        [HttpPut]
-        public ActionResult<Gateway> AddGateway([FromBody] Gateway gateway)
+        // GET: api/Gateways/5                          OK
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Gateway>> GetGateway(int id)
         {
+            try
+            { 
+                var gateway = await _gatewayRepository.GetGateway(id);
+
+                if (gateway != null)
+                {
+                    return gateway;
+                }
+                return NotFound();
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+                                            
+        // PUT: api/Gateways
+        // Gateway from body
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754                        OK
+        [HttpPut]                                       //OK
+        public async Task<ActionResult<Gateway>> PutGateway( Gateway gateway)
+        { 
             try
             {
                 if (gateway != null)
@@ -53,9 +72,9 @@ namespace GatewaysSysAdminWebAPI.Controllers
                     {
                         Regex IPv4Format = new Regex(@"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$");
 
-                        var testGateway = this.gatewayRepository.GetGatewayBySerialNumber(gateway.SerialNumber);
+                        var isInDBGateway = await _gatewayRepository.GetGatewayBySerialNumber(gateway.SerialNumber);
 
-                        if (testGateway != null)
+                        if (isInDBGateway != null)
                         {
                             ModelState.AddModelError("SerialNumber", "Gateway Serial Number already in use.");
                             return BadRequest(ModelState);
@@ -65,6 +84,7 @@ namespace GatewaysSysAdminWebAPI.Controllers
                             if (!IPv4Format.IsMatch(gateway.IpAddress))
                             {
                                 ModelState.AddModelError("IpAddress", "IP Address format error.");
+
                                 return BadRequest(ModelState);
                             }
                             else
@@ -77,9 +97,16 @@ namespace GatewaysSysAdminWebAPI.Controllers
                                 }
                                 else
                                 {
-                                    var newGateway = gatewayRepository.AddGateway(gateway);
-                                    return newGateway;
-                                    // return CreatedAtAction(nameof(AddGateway), new { id = gateway.Id },newGateway);
+                                    var eGateway = await _gatewayRepository.AddGateway(gateway);
+
+                                    if (eGateway == null)
+                                    {
+                                        return NotFound(); 
+                                    }
+                                    else
+                                    {
+                                        return eGateway;
+                                    }
                                 }
                             }
                             else
@@ -99,6 +126,7 @@ namespace GatewaysSysAdminWebAPI.Controllers
                     {
                         ModelState.AddModelError("NoData", "Empty fields.");
                         return BadRequest(ModelState);
+
                     }
                 }
                 else
@@ -107,63 +135,105 @@ namespace GatewaysSysAdminWebAPI.Controllers
                     return BadRequest(ModelState);
                 }
             }
-            catch (Exception e)
+            catch (DbUpdateConcurrencyException DbEx)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-            }
-
-        }
- 
-        // PATCH api/<GatewaysController>/4
-        [HttpPatch]
-        public ActionResult<Gateway> Put(int id, [FromBody] PeripheralDevice peripheralDevice)
-        {
-            try
-            { 
-                var result = this.gatewayRepository.GetGatewayByID(id);
-                if (result != null)
+                if (await _gatewayRepository.GetGateway(gateway.ID) == null)
                 {
-                    if (result.LsPeripheralDevices != null)
-                    {
-                        if (result.LsPeripheralDevices.Count < result.MaxClientNumber)
-                        {
-                            result.LsPeripheralDevices.Add(peripheralDevice);
-                        }
-                    }
-                    return result;
+                    return NotFound();
                 }
                 else
-                    return NotFound(); ;
+                {
+                    return NotFound(DbEx.Message);
+                }
             }
-            catch (Exception)
+
+        }
+            
+        // UPDATE: api/Gateways                         //OK
+        [HttpPatch]
+        public ActionResult<Gateway> UpdateGateway(Gateway gateway)
+        {
+            var eGateway = _gatewayRepository.UpdateGateway(gateway);
+
+            if (eGateway == null)return NotFound();
+
+           return eGateway;
+        }
+
+        /*       
+       // POST: api/Gateways
+       // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+       [HttpPost]
+       public async Task<ActionResult<Gateway>> PostGateway(Gateway gateway)
+       { 
+
+           _context.Gateway.Add(gateway);
+           await _context.SaveChangesAsync();
+
+           return CreatedAtAction("GetGateway", new { id = gateway.ID }, gateway);
+       }
+        */
+        // DELETE: api/Gateways/5                       //OK          
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<Gateway>> DeleteGateway(int id)
+        {
+            var eGateway = await _gatewayRepository.GetGateway(id);
+
+            if (eGateway == null)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError);
+                return NotFound();
+            }
+            
+            var gateway = await _gatewayRepository.DeleteGateway(id); 
+            
+            return gateway;
+
+        }
+
+        // ADD Periferical Device: api/Gateways/5                       //OK
+        [HttpPost("{id=int}")]
+        public async Task<ActionResult<Gateway>> AddPeriphericalDevice(int id,PeripheralDevice gateway)
+        {   //Tratamiento de Execciones
+            try
+            {
+                var eGateway = await _gatewayRepository.AddDeviceToGateway(id, gateway);
+
+                if (eGateway == null)
+                {
+                    return NotFound();
+                }
+
+                return  eGateway;
+            }
+            catch (Exception e)
+            {
+                return BadRequest(error:e.Message.ToString());
             }
         }
 
+        // UPDATE: api/Gateways/5                      // OK
+        //
+        [HttpDelete]
+        public async Task<ActionResult<Gateway>> DeletePeriphericalDevice(int idGateway, int idPDevice)
+        {   //Tratamiento de Execciones
 
-        // DELETE api/<GatewaysController>/5
-        [HttpDelete("{id}")]
-        public ActionResult<Gateway> Delete(int id)
-        {
             try
             {
-                var nGateway = this.gatewayRepository.GetGatewayByID(id);
+                var eGateway = await _gatewayRepository.DeleteDeviceFromGateway(idGateway, idPDevice);
 
-                if (nGateway == null)
+                if (eGateway == null)
                 {
-                    return NotFound($"Gateway with Id = {id} not found.");
+                    return NotFound();
                 }
 
-                this.gatewayRepository.DeleteGatewayByID(id);
-
-                return nGateway;
+                return eGateway;
 
             }
             catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+                return BadRequest(error: e.Message.ToString());
             }
         }
+
     }
 }

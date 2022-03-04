@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace GatewaysSysAdminWebAPI.Migrations
 {
-    public partial class FirstMigrtion : Migration
+    public partial class _01 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -13,7 +13,7 @@ namespace GatewaysSysAdminWebAPI.Migrations
                 name: "Gateway",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    ID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     SerialNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -22,35 +22,36 @@ namespace GatewaysSysAdminWebAPI.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Gateway", x => x.Id);
+                    table.PrimaryKey("PK_Gateway", x => x.ID);
                 });
 
             migrationBuilder.CreateTable(
                 name: "PeripheralDevice",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    ID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UId = table.Column<long>(type: "bigint", nullable: false),
                     DeviceVendor = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DtDeviceCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Online = table.Column<bool>(type: "bit", nullable: false),
-                    GatewayId = table.Column<int>(type: "int", nullable: true)
+                    GatewayID = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PeripheralDevice", x => x.Id);
+                    table.PrimaryKey("PK_PeripheralDevice", x => x.ID);
                     table.ForeignKey(
-                        name: "FK_PeripheralDevice_Gateway_GatewayId",
-                        column: x => x.GatewayId,
+                        name: "FK_PeripheralDevice_Gateway_GatewayID",
+                        column: x => x.GatewayID,
                         principalTable: "Gateway",
-                        principalColumn: "Id");
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_PeripheralDevice_GatewayId",
+                name: "IX_PeripheralDevice_GatewayID",
                 table: "PeripheralDevice",
-                column: "GatewayId");
+                column: "GatewayID");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

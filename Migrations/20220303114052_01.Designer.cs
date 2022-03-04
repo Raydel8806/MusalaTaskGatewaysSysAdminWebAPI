@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GatewaysSysAdminWebAPI.Migrations
 {
     [DbContext(typeof(GatewaysSysAdminDBContext))]
-    [Migration("20220228011041_FirstMigrtion")]
-    partial class FirstMigrtion
+    [Migration("20220303114052_01")]
+    partial class _01
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -26,11 +26,11 @@ namespace GatewaysSysAdminWebAPI.Migrations
 
             modelBuilder.Entity("GatewaysSysAdminWebAPI.Models.Gateway", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
 
                     b.Property<string>("IpAddress")
                         .IsRequired()
@@ -48,18 +48,18 @@ namespace GatewaysSysAdminWebAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.HasKey("ID");
 
                     b.ToTable("Gateway");
                 });
 
             modelBuilder.Entity("GatewaysSysAdminWebAPI.Models.PeripheralDevice", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
 
                     b.Property<string>("DeviceVendor")
                         .IsRequired()
@@ -68,7 +68,7 @@ namespace GatewaysSysAdminWebAPI.Migrations
                     b.Property<DateTime>("DtDeviceCreated")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("GatewayId")
+                    b.Property<int>("GatewayID")
                         .HasColumnType("int");
 
                     b.Property<bool>("Online")
@@ -77,18 +77,22 @@ namespace GatewaysSysAdminWebAPI.Migrations
                     b.Property<long>("UId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id");
+                    b.HasKey("ID");
 
-                    b.HasIndex("GatewayId");
+                    b.HasIndex("GatewayID");
 
                     b.ToTable("PeripheralDevice");
                 });
 
             modelBuilder.Entity("GatewaysSysAdminWebAPI.Models.PeripheralDevice", b =>
                 {
-                    b.HasOne("GatewaysSysAdminWebAPI.Models.Gateway", null)
+                    b.HasOne("GatewaysSysAdminWebAPI.Models.Gateway", "Gateway")
                         .WithMany("LsPeripheralDevices")
-                        .HasForeignKey("GatewayId");
+                        .HasForeignKey("GatewayID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Gateway");
                 });
 
             modelBuilder.Entity("GatewaysSysAdminWebAPI.Models.Gateway", b =>
